@@ -54,3 +54,37 @@ func TestNewCmdVersionClientVersion(t *testing.T) {
 		t.Errorf("unexpected output: %s", buf.String())
 	}
 }
+
+func TestNewCmdVersionShortOutput(t *testing.T) {
+	tf := cmdtesting.NewTestFactory().WithNamespace("test")
+	defer tf.Cleanup()
+	streams, _, buf, _ := genericiooptions.NewTestIOStreams()
+	o := NewOptions(streams)
+	o.ClientOnly = true
+	o.Output = "short"
+
+	cmd := NewCmdVersion(tf, streams)
+	cmd.Flags().Bool("warnings-as-errors", false, "")
+
+	if err := o.Complete(tf, cmd, nil); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if err := o.Validate(); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if err := o.Run(); err != nil {
+		t.Errorf("Cannot execute version command: %v", err)
+	}
+
+	output := buf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) != 1 {
+		t.Errorf("Expected 1 line of output for client-only short format, got %d: %s", len(lines), output)
+	}
+	if !strings.HasPrefix(lines[0], "v") {
+		t.Errorf("Expected version string to start with 'v', got: %s", lines[0])
+	}
+	if strings.Contains(output, "Client Version:") || strings.Contains(output, "Server Version:") {
+		t.Errorf("Short output should not contain labels, got: %s", output)
+	}
+}
