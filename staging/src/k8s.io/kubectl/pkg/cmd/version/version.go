@@ -87,7 +87,7 @@ func NewCmdVersion(f cmdutil.Factory, ioStreams genericiooptions.IOStreams) *cob
 		},
 	}
 	cmd.Flags().BoolVar(&o.ClientOnly, "client", o.ClientOnly, "If true, shows client version only (no server required).")
-	cmd.Flags().StringVarP(&o.Output, "output", "o", o.Output, "One of 'yaml' or 'json'.")
+	cmd.Flags().StringVarP(&o.Output, "output", "o", o.Output, "One of 'yaml', 'json', or 'short'.")
 	return cmd
 }
 
@@ -117,8 +117,8 @@ func (o *Options) Validate() error {
 		return errors.New(fmt.Sprintf("extra arguments: %v", o.args))
 	}
 
-	if o.Output != "" && o.Output != "yaml" && o.Output != "json" {
-		return errors.New(`--output must be 'yaml' or 'json'`)
+	if o.Output != "" && o.Output != "yaml" && o.Output != "json" && o.Output != "short" {
+		return errors.New(`--output must be 'yaml', 'json', or 'short'`)
 	}
 
 	return nil
@@ -146,6 +146,11 @@ func (o *Options) Run() error {
 		fmt.Fprintf(o.Out, "Kustomize Version: %s\n", versionInfo.KustomizeVersion)
 		if versionInfo.ServerVersion != nil {
 			fmt.Fprintf(o.Out, "Server Version: %s\n", versionInfo.ServerVersion.GitVersion)
+		}
+	case "short":
+		fmt.Fprintf(o.Out, "%s\n", versionInfo.ClientVersion.GitVersion)
+		if versionInfo.ServerVersion != nil {
+			fmt.Fprintf(o.Out, "%s\n", versionInfo.ServerVersion.GitVersion)
 		}
 	case "yaml":
 		marshalled, err := yaml.Marshal(&versionInfo)
